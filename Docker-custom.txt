@@ -1,0 +1,41 @@
+docker pull nginx:latest
+docker images
+docker run -it --name custom-nginx nginx:latest /bin/bash
+apt update && apt install curl -y
+exit
+docker commit custom-nginx mycustomimage:v1
+docker images
+docker tag mycustomimage:v1 myacr.azurecr.io/mycustomimage:v1
+az acr login --name myacr
+az acr repository list --name myacr --output table
+docker push myacr.azurecr.io/mycustomimage:v1
+  Deploy to AKS Using the Image..............
+    Create a deployment YAML (deploy.yaml):.....................
+	
+        apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: mycontainer
+        image: myacr.azurecr.io/mycustomimage:v1
+        ports:
+        - containerPort: 80
+.....................
+az aks get-credentials --resource-group myRG --name myAKSCluster
+kubectl apply -f deploy.yaml
+kubectl get pods
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+kubectl expose deployment myapp --type=LoadBalancer --port=80
+kubectl get svc
